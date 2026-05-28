@@ -132,6 +132,10 @@ class MembershipApiIntegrationTest {
                 .andExpect(jsonPath("$.monthlyOrderCount").value(5))
                 .andExpect(jsonPath("$.monthlyOrderValue").value(5000))
                 .andExpect(jsonPath("$.recommendedTier.code").value("GOLD"));
+
+        mockMvc.perform(get("/api/v1/users/{userId}/subscription", userId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tier.code").value("GOLD"));
     }
 
     @Test
@@ -162,6 +166,10 @@ class MembershipApiIntegrationTest {
         mockMvc.perform(get("/api/v1/users/{userId}/tier-recommendation", userId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.recommendedTier.code").value("PLATINUM"));
+
+        mockMvc.perform(get("/api/v1/users/{userId}/subscription", userId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tier.code").value("PLATINUM"));
     }
 
     @Test
