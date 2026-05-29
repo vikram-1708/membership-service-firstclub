@@ -1,6 +1,7 @@
 package com.firstclub.membership.service;
 
 import com.firstclub.membership.domain.entities.MembershipTier;
+import com.firstclub.membership.domain.entities.UserSubscription;
 import com.firstclub.membership.domain.records.OrderRecord;
 import com.firstclub.membership.domain.records.UserProfile;
 import com.firstclub.membership.dto.responses.TierRecommendationResponse;
@@ -14,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.Clock;
 import java.time.Instant;
 import java.time.YearMonth;
 import java.time.ZoneId;
@@ -30,7 +30,6 @@ public class TierEvaluationService {
     private final UserProfileService userProfileService;
     private final TierEligibilityPolicy eligibilityPolicy;
     private final MembershipMapper mapper;
-    private final Clock clock;
 
     public MembershipTier recommendTier(String userId) {
         ensureUserHasActiveSubscription(userId);
@@ -58,8 +57,8 @@ public class TierEvaluationService {
     }
 
     private UserMonthlyMetrics calculateCurrentMonthMetrics(String userId) {
-        ZoneId zone = clock.getZone();
-        YearMonth currentMonth = YearMonth.now(clock);
+        YearMonth currentMonth = YearMonth.now();
+        ZoneId zone = ZoneId.systemDefault();
         Instant from = currentMonth.atDay(1).atStartOfDay(zone).toInstant();
         Instant to = currentMonth.plusMonths(1).atDay(1).atStartOfDay(zone).toInstant();
         List<OrderRecord> orders = orderRepository.findByUserIdAndOrderedAtBetween(userId, from, to);
@@ -72,7 +71,7 @@ public class TierEvaluationService {
 
     private void ensureUserHasActiveSubscription(String userId) {
         subscriptionRepository.findLatestByUserId(userId)
-                .filter(subscription -> subscription.isActive(clock))
+                .filter(UserSubscription::isActive)
                 .orElseThrow(() -> new ResourceNotFoundException("No active subscription found for user: " + userId));
     }
 }

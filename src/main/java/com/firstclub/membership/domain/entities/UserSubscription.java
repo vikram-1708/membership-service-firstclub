@@ -6,7 +6,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
 
-import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -33,9 +32,9 @@ public class UserSubscription {
     @NonNull
     private Instant updatedAt;
 
-    public static UserSubscription create(String userId, MembershipPlan plan, MembershipTier tier, Clock clock) {
-        LocalDate startDate = LocalDate.now(clock);
-        Instant now = Instant.now(clock);
+    public static UserSubscription create(String userId, MembershipPlan plan, MembershipTier tier) {
+        LocalDate startDate = LocalDate.now();
+        Instant now = Instant.now();
         return new UserSubscription(
                 UUID.randomUUID().toString(),
                 userId,
@@ -49,36 +48,36 @@ public class UserSubscription {
         );
     }
 
-    public void changeTier(MembershipTier newTier, Clock clock) {
-        ensureActive(clock);
+    public void changeTier(MembershipTier newTier) {
+        ensureActive();
         this.tierId = newTier.getId();
-        touch(clock);
+        touch();
     }
 
-    public void renewPlan(MembershipPlan newPlan, Clock clock) {
-        ensureActive(clock);
+    public void renewPlan(MembershipPlan newPlan) {
+        ensureActive();
         this.planId = newPlan.getId();
-        this.expiryDate = LocalDate.now(clock).plus(newPlan.getDuration());
-        touch(clock);
+        this.expiryDate = LocalDate.now().plus(newPlan.getDuration());
+        touch();
     }
 
-    public void cancel(Clock clock) {
-        ensureActive(clock);
+    public void cancel() {
+        ensureActive();
         this.status = SubscriptionStatus.CANCELLED;
-        touch(clock);
+        touch();
     }
 
-    public boolean isActive(Clock clock) {
-        return status == SubscriptionStatus.ACTIVE && !expiryDate.isBefore(LocalDate.now(clock));
+    public boolean isActive() {
+        return status == SubscriptionStatus.ACTIVE && !expiryDate.isBefore(LocalDate.now());
     }
 
-    private void ensureActive(Clock clock) {
-        if (!isActive(clock)) {
+    private void ensureActive() {
+        if (!isActive()) {
             throw new IllegalStateException("Subscription is not active");
         }
     }
 
-    private void touch(Clock clock) {
-        this.updatedAt = Instant.now(clock);
+    private void touch() {
+        this.updatedAt = Instant.now();
     }
 }

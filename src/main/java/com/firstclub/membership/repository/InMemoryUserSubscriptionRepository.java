@@ -15,12 +15,6 @@ public class InMemoryUserSubscriptionRepository implements UserSubscriptionRepos
     private final ConcurrentMap<String, UserSubscription> latestByUserId = new ConcurrentHashMap<>();
 
     @Override
-    public Optional<UserSubscription> findActiveByUserId(String userId) {
-        return Optional.ofNullable(latestByUserId.get(userId))
-                .filter(subscription -> subscription.getStatus().name().equals("ACTIVE"));
-    }
-
-    @Override
     public Optional<UserSubscription> findLatestByUserId(String userId) {
         return Optional.ofNullable(latestByUserId.get(userId));
     }

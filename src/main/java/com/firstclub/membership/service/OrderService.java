@@ -11,7 +11,6 @@ import com.firstclub.membership.repository.interfaces.UserSubscriptionRepository
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.Clock;
 import java.time.Instant;
 
 @Service
@@ -21,10 +20,9 @@ public class OrderService {
     private final UserSubscriptionRepository subscriptionRepository;
     private final TierEvaluationService tierEvaluationService;
     private final MembershipMapper mapper;
-    private final Clock clock;
 
     public OrderResponse recordOrder(String userId, RecordOrderRequest request) {
-        OrderRecord order = orderRepository.save(OrderRecord.create(userId, request.orderValue(), Instant.now(clock)));
+        OrderRecord order = orderRepository.save(OrderRecord.create(userId, request.orderValue(), Instant.now()));
         MembershipTier eligibleTier = tierEvaluationService.recommendTier(userId);
         updateActiveSubscriptionTier(userId, eligibleTier);
         return new OrderResponse(
@@ -37,10 +35,10 @@ public class OrderService {
     }
 
     private void updateActiveSubscriptionTier(String userId, MembershipTier eligibleTier) {
-        UserSubscription subscription = subscriptionRepository.findActiveByUserId(userId)
-                .filter(activeSubscription -> activeSubscription.isActive(clock))
+        UserSubscription subscription = subscriptionRepository.findLatestByUserId(userId)
+                .filter(UserSubscription::isActive)
                 .orElseThrow(() -> new ResourceNotFoundException("No active subscription found for user: " + userId));
-        subscription.changeTier(eligibleTier, clock);
+        subscription.changeTier(eligibleTier);
         subscriptionRepository.save(subscription);
     }
 }

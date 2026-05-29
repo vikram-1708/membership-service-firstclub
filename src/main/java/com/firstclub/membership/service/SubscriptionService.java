@@ -13,25 +13,22 @@ import com.firstclub.membership.repository.interfaces.UserSubscriptionRepository
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.Clock;
-
 @Service
 @RequiredArgsConstructor
 public class SubscriptionService {
     private final UserSubscriptionRepository subscriptionRepository;
     private final MembershipCatalogService catalogService;
     private final MembershipMapper mapper;
-    private final Clock clock;
 
     public UserMembershipResponse subscribe(String userId, SubscribeRequest request) {
         subscriptionRepository.findLatestByUserId(userId)
-                .filter(subscription -> subscription.isActive(clock))
+                .filter(UserSubscription::isActive)
                 .ifPresent(subscription -> {
                     throw new BusinessRuleViolationException("User already has an active subscription");
                 });
         MembershipPlan plan = catalogService.getPlanById(request.planId());
         MembershipTier tier = catalogService.getDefaultTier();
-        UserSubscription subscription = subscriptionRepository.save(UserSubscription.create(userId, plan, tier, clock));
+        UserSubscription subscription = subscriptionRepository.save(UserSubscription.create(userId, plan, tier));
         return mapper.toUserMembershipResponse(subscription, plan, tier);
     }
 
@@ -43,14 +40,14 @@ public class SubscriptionService {
     public UserMembershipResponse changePlan(String userId, ChangePlanRequest request) {
         UserSubscription subscription = getActiveSubscription(userId);
         MembershipPlan plan = catalogService.getPlanById(request.planId());
-        subscription.renewPlan(plan, clock);
+        subscription.renewPlan(plan);
         subscriptionRepository.save(subscription);
         return toResponse(subscription);
     }
 
     public SubscriptionCancellationResponse cancel(String userId) {
         UserSubscription subscription = getActiveSubscription(userId);
-        subscription.cancel(clock);
+        subscription.cancel();
         subscriptionRepository.save(subscription);
         return new SubscriptionCancellationResponse(
                 userId,
@@ -61,7 +58,7 @@ public class SubscriptionService {
 
     private UserSubscription getActiveSubscription(String userId) {
         return subscriptionRepository.findLatestByUserId(userId)
-                .filter(subscription -> subscription.isActive(clock))
+                .filter(UserSubscription::isActive)
                 .orElseThrow(() -> new ResourceNotFoundException("No active subscription found for user: " + userId));
     }
 

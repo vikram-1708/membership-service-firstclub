@@ -10,15 +10,10 @@ import com.firstclub.membership.dto.responses.MembershipPlanResponse;
 import com.firstclub.membership.dto.responses.MembershipTierResponse;
 import com.firstclub.membership.dto.responses.TierEligibilityResponse;
 import com.firstclub.membership.dto.responses.UserMembershipResponse;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.time.Clock;
-
 @Component
-@RequiredArgsConstructor
 public class MembershipMapper {
-    private final Clock clock;
 
     public MembershipPlanResponse toPlanResponse(MembershipPlan plan) {
         return new MembershipPlanResponse(
@@ -59,7 +54,7 @@ public class MembershipMapper {
                 subscription.getStatus(),
                 subscription.getStartDate(),
                 subscription.getExpiryDate(),
-                subscription.isActive(clock),
+                subscription.isActive(),
                 subscription.getCreatedAt(),
                 subscription.getUpdatedAt()
         );
